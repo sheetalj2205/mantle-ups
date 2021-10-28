@@ -1,3 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <entities xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/entity-definition-2.1.xsd">
+    <entity entity-name="UpsGateway" package="ups">
+        <field name="upsGatewayConfigId" type="id" is-pk="true"/>
+        <field name="accessLicenceNumber" type="text-medium" encrypt="true"><description>Ups accessLicenceNumber(licenceNumber)</description></field>
+        <field name="userId" type="text-medium" encrypt="true"><description>Ups userId (userName)</description></field>
+        <field name="password" type="text-medium" encrypt="true"><description>Ups password(password)</description></field
+    </entity>
 </entities>
