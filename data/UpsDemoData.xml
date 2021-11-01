@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <entity-facade-xml type="demo">
-    <ups.UpsGateway upsGatewayConfigId="UpsDemo" accessLicenceNumber="" userId="" password="" connectUrl=""/>
+    <ups.UpsGateway upsGatewayConfigId="UpsDemo" accessLicenceNumber="" userId="" password="" shipperNumber="" connectUrl=""/>
 </entity-facade-xml>

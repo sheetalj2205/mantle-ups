@@ -5,6 +5,7 @@
         <field name="accessLicenceNumber" type="text-medium" encrypt="true"><description>Ups accessLicenceNumber(licenceNumber)</description></field>
         <field name="userId" type="text-medium" encrypt="true"><description>Ups userId (userName)</description></field>
         <field name="password" type="text-medium" encrypt="true"><description>Ups password(password)</description></field>
+        <field name="shipperNumber" type="text-medium" encrypt="true"><description>Ups shipper Number(shipperNumber)</description></field>
         <field name="connectUrl" type="text-medium"><description>Ups sandbox/production instance Url</description></field>
         <seed-data>
             <moqui.basic.Enumeration description="Shipping Gateway Ups" enumId="ShGtwyUps" enumTypeId="ShippingGatewayType"/>
