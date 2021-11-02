@@ -4,7 +4,7 @@
     <actions>
         <set field="accessRequest" from="[AccessLicenseNumber:'3CECCCED52F173F2',UserId:'hotwaxmedia',Password:'H0tw@xmedia']"/>
         <log message="${accessRequest}"/>
-        <set field="addressValidationRequest" from="[Request:[TransactionReference:[CustomerContext:'Your Customer Context'],Address:[City:'ALPHARETTA',StateProvinceCode:'GA',PostalCode:'30005']],RequestAction:'AV']"/>
+        <set field="addressValidationRequest" from="[Request:[TransactionReference:[CustomerContext:'Your Customer Context'],RequestAction:'AV'],Address:[City:'ALPHARETTA',StateProvinceCode:'GA',PostalCode:'30005']]"/>
         <log message="${addressValidationRequest}"/>
         <set field="addressMap" from="[accessRequest:accessRequest, addressValidationRequest:addressValidationRequest]"/>
         <log message="${addressMap}"/>
