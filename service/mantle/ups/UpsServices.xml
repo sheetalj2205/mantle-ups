@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<services xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/service-definition-2.1.xsd">
+<services xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/service-definition-2.1.xsd">
     <service verb="send" noun="UpsShippingRequest">
         <in-parameters>
             <parameter name="shippingGatewayConfigId" required="true"/>
@@ -11,11 +12,40 @@
         </out-parameters>
         <actions>
             <entity-find-one entity-name="ups.ShippingGatewayUps" value-field="upsShippingConfig" cache="true"/>
-            <if condition="upsShippingConfig == null || !(upsShippingConfig.userId || upsShippingConfig.password)" >
-    <log message="No shipping configuration found for upsShippingConfigId ${upsShippingConfigId} "/>
-    <return type="warning" error="true" message="No shipping configuration found for upsShippingConfigId ${upsShippingConfigId}"/>
-</if>
-<set field="responseMap" from="[:]"/>
+            <if condition="upsShippingConfig == null || !(upsShippingConfig.userId || upsShippingConfig.password)">
+                <log message="No shipping configuration found for upsShippingConfigId ${upsShippingConfigId} "/>
+                <return type="warning" error="true"
+                        message="No shipping configuration found for upsShippingConfigId ${upsShippingConfigId}"/>
+            </if>
+            <set field="responseMap" from="[:]"/>
+            <script>
+                import org.moqui.util.RestClient;
+                import groovy.json.JsonSlurper;
+
+                def connectUrl = upsShippingConfig.connectUrl;
+                if (!connectUrl.endsWith("/")) {
+                connectUrl+="/";
+                }
+                connectUrl = connectUrl + path;
+
+                RestClient restClient = ec.service.rest().method(RestClient.POST)
+                .uri(connectUrl)
+                .jsonObject(upsShippingConfig.userId, upsShippingConfig.password, requestMap)
+
+                RestClient.RestResponse restResponse = restClient.call()
+                if (restResponse.statusCode &lt; 200 || restResponse.statusCode &gt;= 300) {
+                errMsgMap = (Map) new JsonSlurper().parseText(restResponse.text())
+                ec.logger.warn(restResponse.text())
+                if (errMsgMap?.error) {
+                responseMap.put("error", errMsgMap?.error?.message)
+                } else if (errMsgMap?.errors) {
+                responseMap.put("error", errMsgMap?.title)
+                }
+                return responseMap
+                }
+                responseMap = restResponse.jsonObject()
+            </script>
+
         </actions>
     </service>
 </services>
