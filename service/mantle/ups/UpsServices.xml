@@ -1,16 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <services xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/service-definition-2.1.xsd">
-<service verb="validate" noun="PostalAddress">
-    <actions>
-        <!-- TODO get the values from the entities -->
-        <set field="accessRequest" from="[AccessLicenseNumber:'3CECCCED52F173F2',UserId:'hotwaxmedia',Password:'H0tw@xmedia']"/>
-        <log message="${accessRequest}"/>
-        <set field="addressValidationRequest" from="[Request:[TransactionReference:[CustomerContext:'Your Customer Context'],RequestAction:'AV'],Address:[City:'ALPHARETTA',StateProvinceCode:'GA',PostalCode:'30005']]"/>
-        <log message="${addressValidationRequest}"/>
-        <set field="addressMap" from="[accessRequest:accessRequest, addressValidationRequest:addressValidationRequest]"/>
-        <log message="${addressMap}"/>
-    </actions>
-</service>
     <service verb="send" noun="UpsShippingRequest">
         <in-parameters>
             <parameter name="shippingGatewayConfigId" required="true"/>
