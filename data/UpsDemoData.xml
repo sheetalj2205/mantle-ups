@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <entity-facade-xml type="demo">
-    <ups.ShippingGatewayUps upsGatewayConfigId="UpsDemo" accessLicenceNumber="3CECCCED52F173F2" userId="hotwaxmedia" password="H0tw@xmedia" shipperNumber="82Y3E6" connectUrl="https://wwwcie.ups.com/rest/"/>
+    <ups.ShippingGatewayUps shippingGatewayConfigId="UpsDemo" accessLicenceNumber="3CECCCED52F173F2" userId="hotwaxmedia" password="H0tw@xmedia" shipperNumber="82Y3E6" connectUrl="https://wwwcie.ups.com/rest/"/>
 </entity-facade-xml>
