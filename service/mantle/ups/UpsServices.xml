@@ -21,21 +21,21 @@
             <set field="requestMap" from="[:]"/>
             <set field="requestMap" from="[AccessRequest: [AccessLicenseNumber:'3CECCCED52F173F2',UserId:'hotwaxmedia',Password:'H0tw@xmedia'], AddressValidationRequest: [Request:[TransactionReference:[CustomerContext:'Your Customer Context'],RequestAction:'AV'],Address:[City:'ALPHARETTA',StateProvinceCode:'GA',PostalCode:'30005']]]"/>
             <script><![CDATA[
-                import org.moqui.util.RestClient;
-                import groovy.json.JsonSlurper;
+                  import org.moqui.util.RestClient;
+                  import groovy.json.JsonSlurper;
 
-                def connectUrl = upsShippingConfig.connectUrl;
-                if (!connectUrl.endsWith("/")) {
-                connectUrl+="/";
-                }
-                connectUrl = connectUrl + path;
-                RestClient restClient = ec.service.rest()
-                restClient.method("POST")
-                restClient.uri(connectUrl)
-                restClient.contentType("application/json")
-                restClient.jsonObject(requestMap)
-                RestClient.RestResponse restResponse = restClient.call()
-                if (restResponse.statusCode < 200 || restResponse.statusCode > 300) {
+                  def connectUrl = upsShippingConfig.connectUrl;
+                  if (!connectUrl.endsWith("/")) {
+                    connectUrl+="/";
+                    }
+                 connectUrl = connectUrl + path;
+                 RestClient restClient = ec.service.rest()
+                 restClient.method("POST")
+                 restClient.uri(connectUrl)
+                 restClient.contentType("application/json")
+                 restClient.jsonObject(requestMap)
+                 RestClient.RestResponse restResponse = restClient.call()
+                 if (restResponse.statusCode < 200 || restResponse.statusCode > 300) {
                     errMsgMap = (Map) new JsonSlurper().parseText(restResponse.text())
                     ec.logger.warn(restResponse.text())
                     if (errMsgMap?.error) {
