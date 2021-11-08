@@ -11,4 +11,22 @@
         <log message="${addressMap}"/>
     </actions>
 </service>
+    <service verb="send" noun="UpsShippingRequest">
+        <in-parameters>
+            <parameter name="shippingGatewayConfigId" required="true"/>
+            <parameter name="path" required="true"/>
+            <parameter name="requestMap" type="Map" required="true"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="responseMap" type="Map" required="true"/>
+        </out-parameters>
+        <actions>
+            <entity-find-one entity-name="ups.ShippingGatewayUps" value-field="upsShippingConfig" cache="true"/>
+            <if condition="upsShippingConfig == null || !(upsShippingConfig.userId || upsShippingConfig.password)" >
+    <log message="No shipping configuration found for upsShippingConfigId ${upsShippingConfigId} "/>
+    <return type="warning" error="true" message="No shipping configuration found for upsShippingConfigId ${upsShippingConfigId}"/>
+</if>
+<set field="responseMap" from="[:]"/>
+        </actions>
+    </service>
 </services>
