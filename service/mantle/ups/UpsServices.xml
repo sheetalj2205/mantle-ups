@@ -5,7 +5,7 @@
         <in-parameters>
             <parameter name="shippingGatewayConfigId" required="true"/>
             <parameter name="path" required="true"/>
-            <parameter name="requestMap" type="Map" required="false"/>
+            <parameter name="requestMap" type="Map" required="true"/>
         </in-parameters>
         <out-parameters>
             <parameter name="responseMap" type="Map" required="true"/>
@@ -19,7 +19,6 @@
             </if>
             <set field="responseMap" from="[:]"/>
             <set field="requestMap" from="[:]"/>
-            <set field="requestMap" from="[AccessRequest: [AccessLicenseNumber:'3CECCCED52F173F2',UserId:'hotwaxmedia',Password:'H0tw@xmedia'], AddressValidationRequest: [Request:[TransactionReference:[CustomerContext:'Your Customer Context'],RequestAction:'AV'],Address:[City:'ALPHARETTA',StateProvinceCode:'GA',PostalCode:'30005']]]"/>
             <script><![CDATA[
                   import org.moqui.util.RestClient;
                   import groovy.json.JsonSlurper;
