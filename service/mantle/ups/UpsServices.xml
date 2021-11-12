@@ -77,8 +77,6 @@
             </else></if>
 
 
-
-            <!-- NOTE: because Shippo treats multiple parcels as a multi-piece shipment (only supported by UPS, FedEx?) do one call per package -->
             <!-- parcels -->
             <set field="shippingTotal" from="0.0"/>
             <set field="servicelevelMap" from="null"/>
@@ -101,7 +99,7 @@
                 <set field="description" from="Package"/>
                 <set field="packagingType" from="[code:'02', description:description]"/>
                 <set field="dimensions" from="[UnitOfMeasurement[Code:distance_unit],length:boxType.boxLength, width:boxType.boxWidth, height:boxType.boxHeight]"/>
-                <set field="packageWeight" from="[UnitOfMeasurement[Code:'LBS'],weight:weight]"/>
+                <set field="packageWeight" from="[UnitOfMeasurement[Code:uomId],weight:weight]"/>
 
                 <set field="parcel" from="[packagingType:packagingType,dimensions:dimensions,packageWeight:packageWeight]"/>
 
@@ -111,13 +109,14 @@
                 <!-- Create RateRequest sub Map of requestMap -->
                 <set field="requestMap" from="[Request[Subversion:'1703',TransactionReference:[CustomerContext:'']]]"/>
 
+                <entity-find-one entity-name="ups.ShippingGatewayUps" value-field="ups"/>
                 <!--create Shipment Map with sub maps of ShipmentRatingOptions, Shipper, ShipTo, ShipFrom, Service and ShipmentTotalWeight-->
                 <set field="shipmentRatingOptions" from="[UserLevelDiscountIndicator:'TRUE']"/>
-                <set field="shipper" from="[Name:'Billy Blanks',ShipperNumber:'82Y3E6']"/>
+                <set field="shipper" from="[Name:'Billy Blanks',ShipperNumber:ups.shipperNumber]"/>
                 <set field="shipTo" from="address_to"/>
                 <set field="shipFrom" from="address_from"/>
-                <set field="service" from="[Code:'03',Description:'Ground']"/>
-                <set field="shipmentTotalWeight" from="[UnitOfMeasurement[Code:'LBS',Description:'Pounds'],Weight:weight]"/>
+                <set field="service" from="[Code:'03',Description:shipmentMethodEnumId]"/>
+                <set field="shipmentTotalWeight" from="[UnitOfMeasurement[Code:uomId,Description:'Pounds'],Weight:weight]"/>
 
                 <!-- assemble the full Shipment Map -->
                 <set field="shipment" from="[shipmentRatingOptions:shipmentRatingOptions,shipper:shipper,shipTo:shipTo,shipFrom:shipFrom,service:service,shipmentTotalWeight:shipmentTotalWeight]"/>
