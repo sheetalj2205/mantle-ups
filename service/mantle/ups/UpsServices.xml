@@ -5,6 +5,7 @@
         <in-parameters>
             <parameter name="shippingGatewayConfigId" required="true"/>
             <parameter name="path" required="true"/>
+            <parameter name="methodType" required="true"/>
             <parameter name="requestMap" type="Map" required="true"/>
         </in-parameters>
         <out-parameters>
@@ -18,7 +19,6 @@
                         message="No shipping configuration found for upsShippingConfigId ${upsShippingConfigId}"/>
             </if>
             <set field="responseMap" from="[:]"/>
-            <set field="requestMap" from="[:]"/>
             <script><![CDATA[
                   import org.moqui.util.RestClient;
                   import groovy.json.JsonSlurper;
@@ -29,21 +29,19 @@
                     }
                  connectUrl = connectUrl + path;
                  RestClient restClient = ec.service.rest()
-                 restClient.method("POST")
+                 restClient.method(methodType)
                  restClient.uri(connectUrl)
+                 .basicAuth(upsShippingConfig.userId, upsShippingConfig.password)
                  restClient.contentType("application/json")
                  restClient.jsonObject(requestMap)
                  RestClient.RestResponse restResponse = restClient.call()
                  if (restResponse.statusCode < 200 || restResponse.statusCode > 300) {
-                    errMsgMap = (Map) new JsonSlurper().parseText(restResponse.text())
-                    ec.logger.warn(restResponse.text())
-                    if (errMsgMap?.error) {
-                        responseMap.put("error", errMsgMap?.error?.message)
-                    } else if (errMsgMap?.errors) {
-                        responseMap.put("error", errMsgMap?.title)
+                    String errMsg = restResponse.text()
+                        ec.logger.error("Ups error response (${restResponse.statusCode}): ${errMsg}")
+                        ec.message.addMessage("Ups API error")
+                        ec.message.addMessage(errMsg)
+                        return
                     }
-                    return responseMap
-                }
                 responseMap = restResponse.jsonObject()
             ]]></script>
         </actions>
