@@ -1,3 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<services xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/service-definition-2.1.xsd">
+<services xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/service-definition-2.1.xsd">
+    <service verb="send" noun="UpsRequest">
+        <in-parameters>
+            <parameter name="shippingGatewayConfigId" required="true"/>
+            <parameter name="path" required="true"/>
+            <parameter name="methodType" required="true"/>
+            <parameter name="requestMap" type="Map" required="true"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="responseMap" type="Map" required="true"/>
+        </out-parameters>
+        <actions>
+            <entity-find-one entity-name="ups.ShippingGatewayUps" value-field="upsShippingConfig" cache="true"/>
+            <if condition="upsShippingConfig == null || !(upsShippingConfig.userId || upsShippingConfig.password)">
+                <log message="No shipping configuration found for upsShippingConfigId ${upsShippingConfigId} "/>
+                <return type="warning" error="true"
+                        message="No shipping configuration found for upsShippingConfigId ${upsShippingConfigId}"/>
+            </if>
+            <set field="responseMap" from="[:]"/>
+            <script><![CDATA[
+                  import org.moqui.util.RestClient;
+                  import groovy.json.JsonSlurper;
+
+                  def connectUrl = upsShippingConfig.connectUrl;
+                  if (!connectUrl.endsWith("/")) {
+                    connectUrl+="/";
+                    }
+                 connectUrl = connectUrl + path;
+                 RestClient restClient = ec.service.rest()
+                 restClient.method(methodType)
+                 restClient.uri(connectUrl)
+                 .basicAuth(upsShippingConfig.userId, upsShippingConfig.password)
+                 restClient.contentType("application/json")
+                 restClient.jsonObject(requestMap)
+                 RestClient.RestResponse restResponse = restClient.call()
+                 if (restResponse.statusCode < 200 || restResponse.statusCode > 300) {
+                    String errMsg = restResponse.text()
+                        ec.logger.error("Ups error response (${restResponse.statusCode}): ${errMsg}")
+                        ec.message.addMessage("Ups API error")
+                        ec.message.addMessage(errMsg)
+                        return
+                    }
+                responseMap = restResponse.jsonObject()
+            ]]></script>
+        </actions>
+    </service>
+
 </services>
