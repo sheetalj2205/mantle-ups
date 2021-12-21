@@ -172,4 +172,67 @@
     </iterate>
     </actions>
     </service>
+
+    <service verb="get" noun="AutoPackageInfoList">
+        <implements service="mantle.shipment.CarrierServices.get#AutoPackageInfo"/>
+            <actions>
+                <iterate list="itemInfoList" entry="itemInfoMap">
+                    <log message="===itemInfoMap===${itemInfoMap}==="/>
+                    <entity-find entity-name="mantle.shipment.ShipmentItemSource" list="shipmentSourceList">
+                        <econdition field-name="orderId" from="itemInfoMap.orderId"/>
+                    </entity-find>
+                    <iterate list="shipmentSourceList" entry="shipmentSourceMap">
+                        <set field="shipmentId" from="shipmentSourceMap.shipmentId"/>
+                        <log message="======list of shipment====${shipmentSourceMap}==="/>
+                    </iterate>
+                </iterate>
+                <log message="======shipment Id====${shipmentId}==="/>
+                <entity-find entity-name="mantle.shipment.ShipmentItemSource" list="itemSourceList">
+                    <econdition field-name="shipmentId"/><order-by field-name="shipmentPackageSeqId"/></entity-find>
+                <set field="packageInfoList" from="[]"/>
+                <entity-find entity-name="mantle.shipment.ShipmentPackage" list="packageList">
+                    <econdition field-name="shipmentId"/><order-by field-name="shipmentPackageSeqId"/></entity-find>
+                <entity-find entity-name="mantle.shipment.ShipmentPackageContent" list="shipmentPackageContentList">
+                    <econdition field-name="shipmentId"/><order-by field-name="productId"/></entity-find>
+                <iterate list="packageList" entry="pkg">
+                    <filter-map-list list="shipmentPackageContentList" to-list="curContentList">
+                        <field-map field-name="shipmentPackageSeqId" from="pkg.shipmentPackageSeqId"/></filter-map-list>
+                    <set field="quantityByProductId" from="[:]"/>
+                    <iterate list="curContentList" entry="curContent"><script>quantityByProductId.put(curContent.productId, curContent.quantity)</script></iterate>
+
+                    <script>packageInfoList.add([shipmentBoxTypeId:pkg.shipmentBoxTypeId, weight:pkg.weight,
+                        weightUomId:pkg.weightUomId, shipmentPackageSeqId:pkg.shipmentPackageSeqId, quantityByProductId:quantityByProductId])</script>
+                </iterate>
+                <log message="===========list ${packageInfoList}=========="/>
+            </actions>
+    </service>
+
+    <service verb="get" noun="ItemInfoList">
+        <in-parameters>
+            <parameter name="orderId" required="true"/>
+            <parameter name="orderPartSeqId"/>
+            <parameter name="shipmentId"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="itemInfoList" type="List">
+                <parameter name="itemInfo" type="Map">
+                    <parameter name="productId"/>
+                    <parameter name="quantity"/>
+                    <parameter name="selectedAmount"/>
+                </parameter>
+            </parameter>
+        </out-parameters>
+        <actions>
+            <entity-find entity-name="mantle.order.OrderItem" list="itemInfoList">
+                <econdition field-name="orderId"/>
+                <econdition field-name="orderPartSeqId" ignore-if-empty="true"/>
+                <econdition field-name="productId" operator="is-not-null"/>
+            </entity-find>
+
+            <log message="=====${itemInfoList}======"/>
+
+            <service-call name="mantle.ups.UpsServices.get#AutoPackageInfoList" in-map="[itemInfoList:itemInfoList, shipmentId:shipmentId]" out-map="response"/>
+            <log message="=======response===${response}====="/>
+        </actions>
+    </service>
 </services>
