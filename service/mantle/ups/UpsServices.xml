@@ -48,7 +48,7 @@
     </service>
 
     <!-- ========== Shipment Map of Rate and Shipment Request Map ========== -->
-    <service verb="get" noun="RequestMap">
+    <service verb="get" noun="ShipmentRequestMap">
         <!-- see: https://goshippo.com/docs/reference#shipments -->
         <implements service="mantle.shipment.CarrierServices.get#OrderShippingRate"/>
         <actions>
@@ -183,7 +183,6 @@
                 </if>
 
                 <set field="dimUom" from="boxType.dimensionUomId"/>
-
                 <if condition="'LEN_in'.equals(dimUom)">
                     <set field="dimCode" value="IN"/>
                     <else>
@@ -212,7 +211,6 @@
                         <set field="weightUomCode" value="LBS"/>
                     </else>
                 </if>
-
                 <if condition="!weight || weightUom == null">
                     <message>Package ${packageInfo_index} box type ${boxType.shipmentBoxTypeId} is missing weight or
                         weight UOM, skipping package
