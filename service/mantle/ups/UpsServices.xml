@@ -47,4 +47,199 @@
         </actions>
     </service>
 
+    <!-- ========== Shipment Map of Rate and Shipment Request Map ========== -->
+    <service verb="get" noun="RequestMap">
+        <!-- see: https://goshippo.com/docs/reference#shipments -->
+        <implements service="mantle.shipment.CarrierServices.get#OrderShippingRate"/>
+        <actions>
+            <!--Todo: store value of optionValue in ShippingGatewayOption entity for SgoApiToken-->
+            <if condition="!packageInfoList">
+                <return message="No package info found, not getting Shippo shipping rates"/>
+            </if>
+
+            <entity-find-one entity-name="mantle.order.OrderPart" value-field="orderPart"/>
+
+            <set field="fromPartyId" from="orderPart.vendorPartyId"/>
+            <if condition="!fromPartyId">
+                <return message="Vendor party not set on order part ${orderId}:${orderPartSeqId}"/>
+            </if>
+            <set field="toPartyId" from="orderPart.customerPartyId"/>
+            <if condition="!toPartyId">
+                <return message="To party not set on order part ${orderId}:${orderPartSeqId}"/>
+            </if>
+
+            <set field="carrierPartyId" from="carrierPartyId ?: orderPart.carrierPartyId"/>
+            <if condition="!carrierPartyId || carrierPartyId == '_NA_'">
+                <return message="Carrier not set on order part ${orderId}:${orderPartSeqId}"/>
+            </if>
+            <set field="shipmentMethodEnumId" from="shipmentMethodEnumId ?: orderPart.shipmentMethodEnumId"/>
+            <if condition="!shipmentMethodEnumId">
+                <return message="Shipment method not set on order part ${orderId}:${orderPartSeqId}"/>
+            </if>
+            <entity-find entity-name="mantle.shipment.carrier.ShippingGatewayMethod" list="shippingGatewayMethod">
+                <econdition field-name="shippingGatewayConfigId"/>
+                <econdition field-name="carrierPartyId"/>
+                <econdition field-name="shipmentMethodEnumId"/>
+            </entity-find>
+            <!-- service code of Service submap in Shipment Map-->
+            <if condition="shippingGatewayMethod">
+                <set field="serviceCode" from="shippingGatewayMethod[0].gatewayServiceCode"/>
+            </if>
+
+            <!-- address_from -->
+            <if condition="!orderPart.facilityId">
+                <return message="Facility not set on order part ${orderId}:${orderPartSeqId}"/>
+            </if>
+            <service-call name="mantle.facility.ContactServices.get#FacilityDefaultShipOrigin" out-map="facOriginOut" in-map="[facilityId:orderPart.facilityId]"/>
+            <if condition="!facOriginOut.postalContactMechId">
+                <return message="Facility ${orderPart.facilityId} on order part ${orderId}:${orderPartSeqId} has no ship origin address"/>
+            </if>
+            <entity-find-one entity-name="mantle.party.contact.PostalAddress" value-field="originPostalAddress">
+                <field-map field-name="contactMechId" from="facOriginOut.postalContactMechId"/>
+            </entity-find-one>
+            <if condition="!originPostalAddress.shipGatewayAddressId">
+                <service-call name="mantle.ups.UpsServices.validate#PostalAddress" out-map="fromValidateOut" in-map="[contactMechId:facOriginOut.postalContactMechId, partyId:fromPartyId, facilityId:orderPart.facilityId,
+                           shippingGatewayConfigId:shippingGatewayConfigId]"/>
+                <entity-find-one entity-name="mantle.party.contact.PostalAddress" value-field="originPostalAddress">
+                    <field-map field-name="contactMechId" from="fromValidateOut.contactMechId"/>
+                </entity-find-one>
+            </if>
+
+            <entity-find-one entity-name="mantle.party.contact.ContactMech" value-field="originContactMech">
+                <field-map field-name="contactMechId" from="originPostalAddress.contactMechId"/>
+            </entity-find-one>
+            <if condition="originPostalAddress.shipGatewayAddressId &amp;&amp; originContactMech.trustLevelEnumId in ['CmtlValid', 'CmtlVerified']">
+                <then>
+                    <set field="address_from" from="originPostalAddress.shipGatewayAddressId"/>
+                </then>
+                <else>
+                    <service-call name="mantle.ups.UpsServices.get#AddressMap" out-map="originAddrOut" in-map="[postalAddress:originPostalAddress, partyId:fromPartyId]"/>
+                    <set field="nameFrom" from="originAddrOut.addressMap.Name"/>
+                    <set field="address_from" from="originAddrOut.addressMap.Address"/>
+                </else>
+            </if>
+
+            <!-- address_to -->
+            <set field="orderPartContactMechId" from="orderPart.postalContactMechId"/>
+            <if condition="!orderPartContactMechId">
+                <entity-find entity-name="mantle.order.OrderPartContactMech" list="opcmList">
+                    <econdition field-name="orderId"/>
+                    <econdition field-name="orderPartSeqId"/>
+                    <econdition field-name="contactMechPurposeId" value="PostalShippingDest"/>
+                </entity-find>
+                <if condition="opcmList">
+                    <set field="orderPartContactMechId" from="opcmList[0].contactMechId"/>
+                </if>
+            </if>
+            <if condition="!orderPartContactMechId">
+                <return message="Address not set on order part ${orderId}:${orderPartSeqId}"/>
+            </if>
+            <entity-find-one entity-name="mantle.party.contact.PostalAddress" value-field="destPostalAddress">
+                <field-map field-name="contactMechId" from="orderPartContactMechId"/>
+            </entity-find-one>
+            <if condition="!destPostalAddress.shipGatewayAddressId">
+                <service-call name="mantle.ups.UpsServices.validate#PostalAddress" out-map="toValidateOut"
+                              in-map="[contactMechId:orderPartContactMechId, partyId:toPartyId, shippingGatewayConfigId:shippingGatewayConfigId]"/>
+                <set field="postalContactMechId" from="toValidateOut.contactMechId"/>
+                <set field="orderPart.postalContactMechId" from="postalContactMechId"/>
+                <entity-update value-field="orderPart"/>
+
+                <entity-find-one entity-name="mantle.party.contact.PostalAddress" value-field="destPostalAddress">
+                    <field-map field-name="contactMechId" from="orderPart.postalContactMechId"/>
+                </entity-find-one>
+            </if>
+
+            <entity-find-one entity-name="mantle.party.contact.ContactMech" value-field="destContactMech">
+                <field-map field-name="contactMechId" from="destPostalAddress.contactMechId"/>
+            </entity-find-one>
+            <if condition="destPostalAddress.shipGatewayAddressId &amp;&amp; destContactMech.trustLevelEnumId in ['CmtlValid', 'CmtlVerified']">
+                <then>
+                    <set field="address_to" from="destPostalAddress.shipGatewayAddressId"/>
+                </then>
+                <else>
+                    <service-call name="mantle.ups.UpsServices.get#AddressMap" out-map="destAddrOut" in-map="[postalAddress:destPostalAddress, partyId:toPartyId]"/>
+                    <set field="nameTo" from="destAddrOut.addressMap.Name"/>
+                    <set field="address_to" from="destAddrOut.addressMap.Address"/>
+                </else>
+            </if>
+
+            <!-- parcels -->
+            <set field="parcels" from="[]"/>
+            <iterate list="packageInfoList" entry="packageInfo">
+                <!-- parcel -->
+                <entity-find-one entity-name="mantle.shipment.ShipmentBoxType" value-field="boxType">
+                    <field-map field-name="shipmentBoxTypeId" from="packageInfo.shipmentBoxTypeId"/>
+                </entity-find-one>
+                <if condition="boxType == null">
+                    <message>Package has no box type, skipping</message>
+                    <continue/>
+                </if>
+                <entity-find-one entity-name="mantle.shipment.carrier.CarrierShipmentBoxType" value-field="carrierBoxType">
+                    <field-map field-name="shipmentBoxTypeId" from="packageInfo.shipmentBoxTypeId"/>
+                </entity-find-one>
+                <if condition="carrierBoxType == null">
+                    <message>Package has no packaging type code</message>
+                    <continue/>
+                </if>
+
+                <set field="dimUom" from="boxType.dimensionUomId"/>
+
+                <if condition="'LEN_in'.equals(dimUom)">
+                    <set field="dimCode" value="IN"/>
+                    <else>
+                        <set field="dimCode" value="CM"/>
+                    </else>
+                </if>
+
+                <if condition="!boxType.boxLength || !boxType.boxWidth || !boxType.boxHeight || dimUom == null">
+                    <message>Box type ${boxType.shipmentBoxTypeId} is missing dimensions (length, width, height) or
+                        dimension UOM, skipping package
+                    </message>
+                    <continue/>
+                </if>
+                <entity-find-one entity-name="moqui.basic.Uom" value-field="weightUom">
+                    <field-map field-name="uomId" from="packageInfo.weightUomId ?: 'WT_lb'"/>
+                </entity-find-one>
+                <set field="weight" from="packageInfo.weight ?: boxType.defaultGrossWeight"/>
+
+                <set field="wtUomId" from="weightUom.uomId"/>
+                <if condition="'WT_oz'.equals(wtUomId)">
+                    <set field="weightUomCode" value="OZS"/>
+                    <else>
+                        <if condition="'WT_kg'.equals(wtUomId)">
+                            <set field="weightUomCode" value="KGS"/>
+                        </if>
+                        <set field="weightUomCode" value="LBS"/>
+                    </else>
+                </if>
+
+                <if condition="!weight || weightUom == null">
+                    <message>Package ${packageInfo_index} box type ${boxType.shipmentBoxTypeId} is missing weight or
+                        weight UOM, skipping package
+                    </message>
+                    <continue/>
+                </if>
+
+                <set field="packagingType" from="[Code:carrierBoxType.packagingTypeCode, Description:boxType.description]"/>
+                <set field="dimensions" from="[UnitOfMeasurement:[Code:dimCode], Length:boxType.boxLength, Width:boxType.boxWidth, Height:boxType.boxHeight]"/>
+                <set field="packageWeight" from="[UnitOfMeasurement:[Code:weightUomCode], Weight:weight]"/>
+                <set field="parcel" from="[PackagingType:parcels, Dimensions:dimensions, PackageWeight:packageWeight]"/>
+
+                <!--Creating shipment with multiple packages-->
+                <script>parcels.add(parcel)</script>
+            </iterate>
+
+            <entity-find-one entity-name="ups.ShippingGatewayUps" value-field="ups"/>
+            <!--create Shipment Map with sub maps of Shipper, ShipTo, ShipFrom, Service and Package-->
+            <set field="shipper" from="[ShipperNumber:ups.shipperNumber, Name:nameFrom, Address:address_from]"/>
+            <set field="shipTo" from="[Name:nameTo, Address:address_to]"/>
+            <set field="service" from="[Code:serviceCode, Description:shipmentMethodEnumId]"/>
+
+            <!-- assemble the full Shipment Map -->
+            <set field="shipment" from="[ShipmentRatingOptions:shipmentRatingOptions, Shipper:shipper, ShipTo:shipTo, Service:service, ShipmentTotalWeight:shipmentTotalWeight, Package:parcels]"/>
+            <log message="===shipment===${shipment}===="/>
+
+        </actions>
+    </service>
+
 </services>
