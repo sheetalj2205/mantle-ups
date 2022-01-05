@@ -47,7 +47,7 @@
         </actions>
     </service>
 
-    <!-- ========== Preparing Shipment Map of Rate and Shipment Service ========== -->
+    <!-- ========== Preparing Shipment Map of Rate and Label Service ========== -->
     <service verb="get" noun="ShipmentRequestMap">
         <in-parameters>
             <parameter name="orderId" required="true"/>
