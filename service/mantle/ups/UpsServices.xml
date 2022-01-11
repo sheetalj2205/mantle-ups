@@ -100,7 +100,7 @@
 
             <!-- Get description of shipmentMethodEnumId from Enumeration-->
             <entity-find-one entity-name="moqui.basic.Enumeration" value-field="enumeration">
-                <field-map field-name="EnumId" from="shipmentMethodEnumId"/>
+                <field-map field-name="enumId" from="shipmentMethodEnumId"/>
             </entity-find-one>
             <if condition="enumeration">
                 <set field="description" from="enumeration.description"/>
