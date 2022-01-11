@@ -99,12 +99,10 @@
             <set field="is_valid" from="'1'.equals(responseStatusCode)"/>
             <!--if responseStatusCode is 1 then only code is giving Success rest in all cases it is Failure: based on that set value of trustLevelEnumId -->
             <set field="trustLevelEnumId" from="(is_valid) ? 'CmtlValid' : 'CmtlInvalid'"/>
-
             <log message="Ups validate address ${contactMechId} complete? ${responseStatusDescription} valid? ${responseStatusCode} trust ${trustLevelEnumId}}"/>
 
             <!--Note: currently service is validating the address only on the basis of the response status code that it is either Success or Faliure -->
             <!--TODO: Not updating ConatctMech related entity with the cleansed address based on the quality of response -->
-
             <entity-find-one entity-name="mantle.party.contact.ContactMech" value-field="origContactMech"/>
             <set field="origContactMech.trustLevelEnumId" from="trustLevelEnumId"/>
             <entity-update value-field="origContactMech"/>
@@ -135,7 +133,6 @@
             </entity-find-one>
             <set field="contactMechId" from="postalAddress.contactMechId"/>
             <if condition="!partyId">
-
                 <!-- try to find from related Party -->
                 <entity-find entity-name="mantle.party.contact.PartyContactMech" list="pcmList">
                     <econdition field-name="contactMechId"/>
@@ -158,8 +155,7 @@
                 <set field="postalCode" value="${postalAddress.postalCode}-${postalAddress.postalCodeExt}"/>
             </if>
             <set field="countryCode" from="postalAddress.countryGeoId"/>
-            <set field="address"
-                 from="[AddressLine:addressLine, City:city, StateProvinceCode:geoStateCode.geoCodeAlpha2, PostalCode:postalCode, CountryCode:geoCountryCode.geoCodeAlpha2]"/>
+            <set field="address" from="[AddressLine:addressLine, City:city, StateProvinceCode:geoStateCode.geoCodeAlpha2, PostalCode:postalCode, CountryCode:geoCountryCode.geoCodeAlpha2]"/>
             <set field="addressMap" from="[Name:name, Address:address]"/>
 
         </actions>
