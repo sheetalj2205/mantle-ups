@@ -121,8 +121,21 @@
             <parameter name="addressMap" type="Map"/>
         </out-parameters>
         <actions>
+            <set field="stateProvinceGeoId" from="postalAddress.stateProvinceGeoId"/>
+            <set field="countryGeoId" from="postalAddress.countryGeoId"/>
+
+            <!--Find stateCodeAlpha2 for stateProvinceGeoID -->
+            <entity-find-one entity-name="moqui.basic.Geo" value-field="geoStateCode">
+                <field-map field-name="geoId" from="stateProvinceGeoId"/>
+            </entity-find-one>
+
+            <!--Find stateCodeAlpha2 for countryGeoId -->
+            <entity-find-one entity-name="moqui.basic.Geo" value-field="geoCountryCode">
+                <field-map field-name="geoId" from="countryGeoId"/>
+            </entity-find-one>
             <set field="contactMechId" from="postalAddress.contactMechId"/>
             <if condition="!partyId">
+
                 <!-- try to find from related Party -->
                 <entity-find entity-name="mantle.party.contact.PartyContactMech" list="pcmList">
                     <econdition field-name="contactMechId"/>
@@ -134,14 +147,21 @@
                     <set field="partyId" from="pcmList[0].partyId"/>
                 </if>
             </if>
+
+            <!--Get name, city, addressLine, stateProvinceCode, postalCode, countryCode for the Address Map-->
+            <set field="name" from="postalAddress.toName"/>
+            <set field="addressLine" from="postalAddress.address1"/>
             <set field="city" from="postalAddress.city"/>
-            <set field="stateProvinceCode" from="postalAddress.stateProvinceGeo"/>
+            <set field="stateProvinceCode" from="postalAddress.stateProvinceGeoId"/>
             <set field="postalCode" from="postalAddress.postalCode"/>
             <if condition="postalAddress.postalCodeExt &amp;&amp; postalAddress.postalCode != postalAddress.postalCodeExt">
                 <set field="postalCode" value="${postalAddress.postalCode}-${postalAddress.postalCodeExt}"/>
             </if>
             <set field="countryCode" from="postalAddress.countryGeoId"/>
-            <set field="addressMap" from="[City:city, StateProvinceCode: stateProvinceCode, PostalCode:postalCode]"/>
+            <set field="address"
+                 from="[AddressLine:addressLine, City:city, StateProvinceCode:geoStateCode.geoCodeAlpha2, PostalCode:postalCode, CountryCode:geoCountryCode.geoCodeAlpha2]"/>
+            <set field="addressMap" from="[Name:name, Address:address]"/>
+
         </actions>
     </service>
 
