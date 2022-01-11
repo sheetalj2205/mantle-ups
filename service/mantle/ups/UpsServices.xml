@@ -229,6 +229,10 @@
                     </message>
                     <continue/>
                 </if>
+                <!--Convert data type of length, width and height from decimal-number to String as UPS accepts them as String only-->
+                <set field="boxLengthStr" from="boxType.boxLength.toString()"/>
+                <set field="boxWidthStr" from="boxType.boxWidth.toString()"/>
+                <set field="boxHeightStr" from="boxType.boxHeight.toString()"/>
 
                 <!--get weightUomId from Uom -->
                 <entity-find-one entity-name="moqui.basic.Uom" value-field="weightUom">
@@ -254,11 +258,13 @@
                     <continue/>
                 </if>
                 <set field="weight" from="packageInfo.weight ?: boxType.defaultGrossWeight"/>
+                <!--Convert data type of weight to String from BigDecimal -->
+                <set field="weightStr" from="weight.toString()"/>
 
                 <!--Preparing Package map of shipment-->
                 <set field="packagingType" from="[Code:packagingTypeCode, Description:boxType.description]"/>
-                <set field="dimensions" from="[UnitOfMeasurement:[Code:dimCode], Length:boxType.boxLength, Width:boxType.boxWidth, Height:boxType.boxHeight]"/>
-                <set field="packageWeight" from="[UnitOfMeasurement:[Code:weightUomCode], Weight:weight]"/>
+                <set field="dimensions" from="[UnitOfMeasurement:[Code:dimCode], Length:boxLengthStr, Width:boxWidthStr, Height:boxHeightStr]"/>
+                <set field="packageWeight" from="[UnitOfMeasurement:[Code:weightUomCode], Weight:weightStr]"/>
                 <set field="parcel" from="[Packaging:packagingType, Dimensions:dimensions, PackageWeight:packageWeight]"/>
 
                 <!--Creating shipment with multiple packages-->
@@ -274,8 +280,7 @@
             <set field="paymentInformation" from="[ShipmentCharge:[Type:'01', BillShipper:[AccountNumber:ups.shipperNumber]]]"/>
 
             <!-- assemble the full Shipment Map -->
-            <set field="shipment"
-                 from="[Shipper:shipper, ShipTo:shipTo, Service:service, PaymentInformation:paymentInformation, Package:parcel]"/>
+            <set field="shipment" from="[Shipper:shipper, ShipTo:shipTo, Service:service, PaymentInformation:paymentInformation, Package:parcel]"/>
 
         </actions>
     </service>
