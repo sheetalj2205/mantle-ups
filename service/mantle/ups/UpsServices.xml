@@ -47,4 +47,79 @@
         </actions>
     </service>
 
+
+    <!-- ========== Label Service ========== -->
+    <service verb="get" noun="OrderShippingRate">
+        <in-parameters>
+            <parameter name="orderId" required="true"/>
+            <parameter name="orderPartSeqId" required="true"/>
+            <parameter name="shippingGatewayConfigId" required="true"/>
+            <parameter name="createOrderItem" type="Boolean" default="true"/>
+        </in-parameters>
+        <actions>
+            <!-- call get#ItemInfoList to get Item List used as in-map in get#AutoPackageInfoList service -->
+            <service-call name="mantle.ups.UpsServices.get#ItemInfoList" in-map="[orderId:orderId]" out-map="itemList"/>
+
+            <!-- call get#AutoPackageInfoList to get packageInfoList -->
+            <service-call name="mantle.ups.UpsServices.get#AutoPackageInfoList" in-map="[itemList]" out-map="packageInfoList"/>
+
+            <!-- Get shipmentId from packageInfoList used as key-map field for ShipmentPackageRouteSeg -->
+            <set field="shipmentId" from="packageInfoList.packageInfoList[0].shipmentId"/>
+
+            <!--Call get#ShipmentRequestMap to get Shipment Map of ShipmentRequest -->
+            <service-call name="mantle.ups.UpsServices.get#ShipmentRequestMap" in-map="[orderId:orderId, orderPartSeqId:orderPartSeqId,
+                            shippingGatewayConfigId:shippingGatewayConfigId, packageInfoList:packageInfoList.packageInfoList]" out-map="shipment"/>
+
+            <set field="path" value="ship/v1/shipments"/>
+            <set field="method" value="POST"/>
+            <set field="shipmentRequest" from="[ShipmentRequest:[Shipment:shipment.shipment]]"/>
+
+            <!--Calling generic service for sending request-->
+            <service-call name="mantle.ups.UpsServices.send#UpsRequest" in-map="[shippingGatewayConfigId:shippingGatewayConfigId, path:path, methodType:method, requestMap:shipmentRequest]" out-map="shippingLabelResponseOut"/>
+
+            <!-- Get PackageResults from shippingLabelResponseOut to extract Urls -->
+            <set field="packageResultsList" from="shippingLabelResponseOut.responseMap.ShipmentResponse.ShipmentResults.PackageResults"/>
+
+            <set field="imageUrls" from="[]"/>
+            <!-- If packageResult is a list for multiple packages -->
+            <if condition="packageResultsList instanceof List">
+                <iterate list="packageResultsList" entry="packageResultInfo">
+                    <set field="graphicImageUrl" from="packageResultInfo.ShippingLabel.GraphicImage"/>
+                    <set field="trackingNumber" from="packageResultInfo.TrackingNumber"/>
+                    <script><![CDATA[
+                      String url = graphicImageUrl
+                      byte[] binData = Base64.getDecoder().decode(url)
+                      Blob blob = new javax.sql.rowset.serial.SerialBlob(binData)
+                      imageUrls.add(blob)
+                      ]]></script>
+                </iterate>
+                <else>
+                    <!--If packageResult is a Map for single package -->
+                    <set field="graphicImageUrl" from="packageResultsList.ShippingLabel.GraphicImage"/>
+                    <set field="trackingNumber" from="packageResultsList.TrackingNumber"/>
+                    <script><![CDATA[
+                      String url = graphicImageUrl
+                      byte[] binData = Base64.getDecoder().decode(url)
+                      Blob blob = new javax.sql.rowset.serial.SerialBlob(binData)
+                      imageUrls.add(blob)
+                      ]]></script>
+                </else></if>
+
+            <!--Store image of label for each package in ShipmentPackageRouteSeg -->
+            <iterate list="packageInfoList.packageInfoList" entry="packageInfo">
+                <set field="shipmentId" from="packageInfo.shipmentId"/>
+                <set field="shipmentPackageSeqId" from="packageInfo.shipmentPackageSeqId"/>
+                <entity-find-one entity-name="mantle.shipment.ShipmentPackageRouteSeg" value-field="shipmentPackageRouteSeg">
+                    <field-map field-name="shipmentId" />
+                    <field-map field-name="shipmentPackageSeqId"/>
+                </entity-find-one>
+                <script>for(Blob image : imageUrls){</script>
+                <set field="shipmentPackageRouteSeg.labelImage" from="image"/>
+                <script>}</script>
+                <entity-update value-field="shipmentPackageRouteSeg"/>
+            </iterate>
+
+        </actions>
+    </service>
+
 </services>
