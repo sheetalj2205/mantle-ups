@@ -86,7 +86,7 @@
             <service-call name="mantle.ups.UpsServices.get#AddressMap" out-map="addrOut" in-map="[postalAddress:postalAddress, partyId:partyId]"/>
             <!--TODO: Will handle request failure response in the specific task-->
             <!--Ticket Link: https://app.clickup.com/t/1wfazy0 -->
-            <set field="addressMap" from="addrOut.addressMap"/>
+            <set field="addressMap" from="addrOut.addressMap.Address"/>
             <set field="addressValidationRequestMap" from="[Request:[TransactionReference:[CustomerContext:'Ups Shipping Address Validation'], RequestAction:'AV'], Address:addressMap]"/>
             <set field="inMap" from="[AccessRequest:accessRequestMap, AddressValidationRequest:addressValidationRequestMap]"/>
 
