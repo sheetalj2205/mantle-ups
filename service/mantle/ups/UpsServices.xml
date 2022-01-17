@@ -51,18 +51,18 @@
         <implements service="mantle.shipment.CarrierServices.get#AutoPackageInfo"/>
         <actions>
             <!--Get shipmentIds from ShipmentAndItemSource using orderId and orderItemSeqId of itemInfoList-->
-            <set field="shipmentIdsList" from="new HashSet()"/>
+            <set field="shipmentIdsSet" from="new HashSet()"/>
             <iterate list="itemInfoList" entry="itemInfoMap">
-                <entity-find-one entity-name="mantle.shipment.ShipmentAndItemSource" value-field="shipmentSourceList">
-                    <field-map field-name="orderId" from="itemInfoMap.orderId"/>
-                    <field-map field-name="orderItemSeqId" from="itemInfoMap.orderItemSeqId"/>
-                </entity-find-one>
-                <script>shipmentIdsList.add(shipmentSourceList.shipmentId)</script>
+                <entity-find entity-name="mantle.shipment.ShipmentAndItemSource" list="shipmentSourceList">
+                    <econdition field-name="orderId" from="itemInfoMap.orderId"/>
+                    <order-by field-name="orderItemSeqId"/>
+                </entity-find>
+               <set field="shipmentIdsSet" from="new HashSet(shipmentSourceList*.shipmentId)"/>
             </iterate>
 
             <set field="packageInfoList" from="[]"/>
 
-            <iterate list="shipmentIdsList" entry="shipment">
+            <iterate list="shipmentIdsSet" entry="shipment">
                 <entity-find entity-name="mantle.shipment.ShipmentPackage" list="packageList">
                     <econdition field-name="shipmentId" from="shipment"/>
                     <order-by field-name="shipmentPackageSeqId"/>
