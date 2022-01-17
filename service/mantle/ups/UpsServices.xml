@@ -106,6 +106,8 @@
                 </else></if>
 
             <!--Store image of label for each package in ShipmentPackageRouteSeg -->
+            <!--TODO: Find is the order of labels in response map is same in which the packages are listed in request map or not? -->
+            <set field="iterator" type="Integer" value="0"/>
             <iterate list="packageInfoList.packageInfoList" entry="packageInfo">
                 <set field="shipmentId" from="packageInfo.shipmentId"/>
                 <set field="shipmentPackageSeqId" from="packageInfo.shipmentPackageSeqId"/>
@@ -113,9 +115,9 @@
                     <field-map field-name="shipmentId" />
                     <field-map field-name="shipmentPackageSeqId"/>
                 </entity-find-one>
-                <script>for(Blob image : imageUrls){</script>
-                <set field="shipmentPackageRouteSeg.labelImage" from="image"/>
-                <script>}</script>
+                <!-- Get label image from imageUrls for the corresponding package-->
+                <set field="shipmentPackageRouteSeg.labelImage" from="imageUrls[iterator]"/>
+                <script>iterator = iterator+1</script>
                 <entity-update value-field="shipmentPackageRouteSeg"/>
             </iterate>
 
