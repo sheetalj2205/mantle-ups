@@ -107,7 +107,7 @@
             <!--Store image of label for each package in ShipmentPackageRouteSeg -->
             <!--TODO: Find is the order of labels in response map is same in which the packages are listed in request map or not? -->
             <set field="iterator" type="Integer" value="0"/>
-            <iterate list="packageInfoList.packageInfoList" entry="packageInfo">
+            <iterate list="packageList" entry="packageInfo">
                 <set field="shipmentId" from="packageInfo.shipmentId"/>
                 <set field="shipmentPackageSeqId" from="packageInfo.shipmentPackageSeqId"/>
                 <entity-find-one entity-name="mantle.shipment.ShipmentPackageRouteSeg" value-field="shipmentPackageRouteSeg">
