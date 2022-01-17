@@ -59,14 +59,15 @@
         <actions>
 
             <!-- call get#AutoPackageInfoList to get packageInfoList -->
-            <service-call name="mantle.ups.UpsServices.get#AutoPackageInfoList" in-map="[itemList]" out-map="packageInfoList"/>
+            <service-call name="mantle.ups.UpsServices.get#AutoPackageInfoList" in-map="[itemList]" out-map="itemList"/>
+            <set field="packageList" from="itemList.packageInfo.packageInfoList"/>
 
             <!-- Get shipmentId from packageInfoList used as key-map field for ShipmentPackageRouteSeg -->
             <set field="shipmentId" from="packageInfoList.packageInfoList[0].shipmentId"/>
 
             <!--Call get#ShipmentRequestMap to get Shipment Map of ShipmentRequest -->
             <service-call name="mantle.ups.UpsServices.get#ShipmentRequestMap" in-map="[orderId:orderId, orderPartSeqId:orderPartSeqId,
-                            shippingGatewayConfigId:shippingGatewayConfigId, packageInfoList:packageInfoList.packageInfoList]" out-map="shipment"/>
+                            shippingGatewayConfigId:shippingGatewayConfigId, packageInfoList:packageList]" out-map="shipment"/>
 
             <set field="path" value="ship/v1/shipments"/>
             <set field="method" value="POST"/>
