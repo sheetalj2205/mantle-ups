@@ -50,36 +50,42 @@
     <service verb="get" noun="PackageInfo">
         <implements service="mantle.shipment.CarrierServices.get#AutoPackageInfo"/>
         <actions>
+            <!--Get shipmentIds from ShipmentAndItemSource using orderId and orderItemSeqId of itemInfoList-->
+            <set field="shipmentIdsList" from="new HashSet()"/>
             <iterate list="itemInfoList" entry="itemInfoMap">
-                <entity-find entity-name="mantle.shipment.ShipmentItemSource" list="shipmentSourceList">
-                    <econdition field-name="orderId" from="itemInfoMap.orderId"/>
-                </entity-find>
-                <iterate list="shipmentSourceList" entry="shipmentSourceMap">
-                    <set field="shipmentId" from="shipmentSourceMap.shipmentId"/>
-                </iterate>
+                <entity-find-one entity-name="mantle.shipment.ShipmentAndItemSource" value-field="shipmentSourceList">
+                    <field-map field-name="orderId" from="itemInfoMap.orderId"/>
+                    <field-map field-name="orderItemSeqId" from="itemInfoMap.orderItemSeqId"/>
+                </entity-find-one>
+                <script>shipmentIdsList.add(shipmentSourceList.shipmentId)</script>
             </iterate>
-            <set field="packageInfoList" from="[]"/>
-            <entity-find entity-name="mantle.shipment.ShipmentPackage" list="packageList">
-                <econdition field-name="shipmentId"/>
-                <order-by field-name="shipmentPackageSeqId"/>
-            </entity-find>
-            <entity-find entity-name="mantle.shipment.ShipmentPackageContent" list="shipmentPackageContentList">
-                <econdition field-name="shipmentId"/>
-                <order-by field-name="productId"/>
-            </entity-find>
-            <iterate list="packageList" entry="pkg">
-                <filter-map-list list="shipmentPackageContentList" to-list="curContentList">
-                    <field-map field-name="shipmentPackageSeqId" from="pkg.shipmentPackageSeqId"/>
-                </filter-map-list>
-                <set field="quantityByProductId" from="[:]"/>
-                <iterate list="curContentList" entry="curContent">
-                    <script>quantityByProductId.put(curContent.productId, curContent.quantity)</script>
-                </iterate>
 
-                <script>packageInfoList.add([shipmentBoxTypeId:pkg.shipmentBoxTypeId, weight:pkg.weight,
-                    weightUomId:pkg.weightUomId, shipmentPackageSeqId:pkg.shipmentPackageSeqId,
-                    quantityByProductId:quantityByProductId])
-                </script>
+            <set field="packageInfoList" from="[]"/>
+
+            <iterate list="shipmentIdsList" entry="shipment">
+                <entity-find entity-name="mantle.shipment.ShipmentPackage" list="packageList">
+                    <econdition field-name="shipmentId" from="shipment"/>
+                    <order-by field-name="shipmentPackageSeqId"/>
+                </entity-find>
+
+                <entity-find entity-name="mantle.shipment.ShipmentPackageContent" list="shipmentPackageContentList">
+                    <econdition field-name="shipmentId" from="shipment"/>
+                    <order-by field-name="productId"/>
+                </entity-find>
+
+                <iterate list="packageList" entry="pkg">
+                    <filter-map-list list="shipmentPackageContentList" to-list="curContentList">
+                        <field-map field-name="shipmentPackageSeqId" from="pkg.shipmentPackageSeqId"/>
+                    </filter-map-list>
+                    <set field="quantityByProductId" from="[:]"/>
+                    <iterate list="curContentList" entry="curContent">
+                        <script>quantityByProductId.put(curContent.productId, curContent.quantity)</script>
+                    </iterate>
+                    <script>packageInfoList.add([shipmentId:pkg.shipmentId, shipmentBoxTypeId:pkg.shipmentBoxTypeId, weight:pkg.weight,
+                        weightUomId:pkg.weightUomId, shipmentPackageSeqId:pkg.shipmentPackageSeqId,
+                        quantityByProductId:quantityByProductId])
+                    </script>
+                </iterate>
             </iterate>
         </actions>
     </service>
