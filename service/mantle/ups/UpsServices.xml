@@ -49,6 +49,9 @@
 
     <service verb="validate" noun="PostalAddress">
         <implements service="mantle.shipment.CarrierServices.validate#ShippingPostalAddress"/>
+        <out-parameters>
+           <parameter name="addressMap" type="Map"/>
+        </out-parameters>
         <actions>
             <entity-find-one entity-name="mantle.party.contact.PostalAddress" value-field="postalAddress"/>
             <if condition="postalAddress == null"><return/></if>
