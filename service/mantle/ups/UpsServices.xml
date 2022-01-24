@@ -89,14 +89,18 @@
                 <set field="hasIssues" from="true"/>
                 <message type="danger">To party not set on shipment ${shipmentId}</message>
             </if>
+            <if condition="hasIssues">
+                <message type="danger">Issues found, not requesting Shippo labels</message>
+                <return/>
+            </if>
 
             <!--address_to-->
             <set field="destPostalContactMech" from="routeSegment.destPostalContactMechId"/>
             <!-- If ShipmentRouteSegment Entity has no value of destPostalContactMechId, find contactMechId from PartyContactMech -->
-            <if condition="!originPostalContactMech">
+            <if condition="!destPostalContactMech">
                 <entity-find-one entity-name="mantle.party.contact.PartyContactMech" value-field="partyContactMech">
                     <field-map field-name="partyId" from="toPartyId"/>
-                    <field-map field-name="contactMechPurposeId" from="'PostalShippingDest'"/>
+                    <field-map field-name="contactMechPurposeId" value="'PostalShippingDest'"/>
                 </entity-find-one>
                 <set field="destPostalContactMech" from="partyContactMech.contactMechId"/>
             </if>
@@ -114,7 +118,7 @@
             <if condition="!originPostalContactMech">
                 <entity-find-one entity-name="mantle.party.contact.PartyContactMech" value-field="partyContactMech">
                     <field-map field-name="partyId" from="fromPartyId"/>
-                    <field-map field-name="contactMechPurposeId" from="'PostalShippingOrigin'"/>
+                    <field-map field-name="contactMechPurposeId" value="'PostalShippingOrigin'"/>
                 </entity-find-one>
                 <set field="originPostalContactMech" from="partyContactMech.contactMechId"/>
             </if>
@@ -141,7 +145,7 @@
                 <field-map field-name="enumId" from="shipmentMethodEnumId"/>
             </entity-find-one>
             <if condition="enumeration">
-                <set field="description" from="enumeration.description"/>
+                <set field="shippingMethodDesc" from="enumeration.description"/>
             </if>
 
             <!-- create packageInfoList -->
@@ -167,7 +171,7 @@
             <!--create sub maps Shipper, ShipTo, Service and Package of Shipment map-->
             <set field="shipper" from="[ShipperNumber:ups.shipperNumber, Name:nameFrom, Address:address_from]"/>
             <set field="shipTo" from="[Name:nameTo, Address:address_to]"/>
-            <set field="service" from="[Code:serviceCode, Description:description]"/>
+            <set field="service" from="[Code:serviceCode, Description:shippingMethodDesc]"/>
             <set field="paymentInformation" from="[ShipmentCharge:[Type:'01', BillShipper:[AccountNumber:ups.shipperNumber]]]"/>
 
             <!-- assemble the full Shipment Map -->
