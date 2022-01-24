@@ -100,7 +100,7 @@
             <if condition="!destPostalContactMech">
                 <entity-find-one entity-name="mantle.party.contact.PartyContactMech" value-field="partyContactMech">
                     <field-map field-name="partyId" from="toPartyId"/>
-                    <field-map field-name="contactMechPurposeId" value="'PostalShippingDest'"/>
+                    <field-map field-name="contactMechPurposeId" value="PostalShippingDest"/>
                 </entity-find-one>
                 <set field="destPostalContactMech" from="partyContactMech.contactMechId"/>
             </if>
@@ -118,7 +118,7 @@
             <if condition="!originPostalContactMech">
                 <entity-find-one entity-name="mantle.party.contact.PartyContactMech" value-field="partyContactMech">
                     <field-map field-name="partyId" from="fromPartyId"/>
-                    <field-map field-name="contactMechPurposeId" value="'PostalShippingOrigin'"/>
+                    <field-map field-name="contactMechPurposeId" value="PostalShippingOrigin"/>
                 </entity-find-one>
                 <set field="originPostalContactMech" from="partyContactMech.contactMechId"/>
             </if>
