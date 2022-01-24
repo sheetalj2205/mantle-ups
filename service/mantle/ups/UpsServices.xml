@@ -113,16 +113,14 @@
             </if>
 
             <!-- Store each Package's trackingCode and labelImage in its record of packageRouteSeg -->
-            <set field="iterator" type="Integer" value="0"/>
             <iterate list="packageRouteSegList" entry="packageRouteSeg">
                 <script>
-                    String url = imageUrls[iterator]
+                    String url = imageUrls[packageRouteSeg_index]
                     byte[] binData = Base64.getDecoder().decode(url)
                 </script>
-                <set field="packageRouteSeg.trackingCode" from="trackingNumbers[iterator]"/>
+                <set field="packageRouteSeg.trackingCode" from="trackingNumbers[packageRouteSeg_index]"/>
                 <set field="packageRouteSeg.labelImage" from="binData"/>
                 <entity-update value-field="packageRouteSeg"/>
-                <script>iterator=iterator+1</script>
             </iterate>
         </actions>
 
