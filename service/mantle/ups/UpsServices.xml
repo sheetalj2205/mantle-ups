@@ -66,31 +66,35 @@
 
             <!-- Set shippingGatewayConfigId given in input else take value stored in routeSegment entity -->
             <set field="shippingGatewayConfigId" from="shippingGatewayConfigId?:routeSegment.shippingGatewayConfigId"/>
+            <set field="hasIssues" from="false"/>
 
             <set field="carrierPartyId" from="carrierPartyId ?: routeSegment.carrierPartyId"/>
             <if condition="!carrierPartyId || carrierPartyId == '_NA_'">
-                <return message="Carrier not set on ${shipmentId}:${shipmentRouteSegmentSeqId}"/>
+                <set field="hasIssues" from="true"/>
+                <message type="danger">Carrier not set on ${shipmentId}:${shipmentRouteSegmentSeqId}</message>
             </if>
 
             <!-- Get ShipmentMethodTypeEnumId from the input or from routeSegment entity-->
             <set field="shipmentMethodEnumId" from="shipmentMethodEnumId?:routeSegment.shipmentMethodEnumId"/>
             <if condition="!shipmentMethodEnumId">
-                <return type="danger" message="In get#ShippingLabel Service, no shipmentMethod available."/>
+                <set field="hasIssues" from="true"/>
+                <message type="danger">In get#ShippingLabel Service, no shipmentMethod available</message>
             </if>
 
-            <set field="hasIssues" from="false"/>
             <set field="fromPartyId" from="shipment.fromPartyId"/>
             <if condition="!fromPartyId">
                 <set field="hasIssues" from="true"/>
                 <message type="danger">From party not set on shipment ${shipmentId}</message>
             </if>
+
             <set field="toPartyId" from="shipment.toPartyId"/>
             <if condition="!toPartyId">
                 <set field="hasIssues" from="true"/>
                 <message type="danger">To party not set on shipment ${shipmentId}</message>
             </if>
+
             <if condition="hasIssues">
-                <message type="danger">Issues found, not requesting Shippo labels</message>
+                <message type="danger">Issues found, not requesting UPS labels</message>
                 <return/>
             </if>
 
