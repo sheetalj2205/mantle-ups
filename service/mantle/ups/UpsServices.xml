@@ -31,18 +31,20 @@
                  RestClient restClient = ec.service.rest()
                  restClient.method(methodType)
                  restClient.uri(connectUrl)
+                 .addHeader("AccessLicenseNumber", "3CECCCED52F173F2")
+                            .addHeader("Password", "H0tw@xmedia")
+                            .addHeader("Username", "hotwaxmedia")
                  .basicAuth(upsShippingConfig.userId, upsShippingConfig.password)
                  restClient.contentType("application/json")
                  restClient.jsonObject(requestMap)
                  RestClient.RestResponse restResponse = restClient.call()
+                 responseMap = restResponse.jsonObject()
                  if (restResponse.statusCode < 200 || restResponse.statusCode > 300) {
-                    String errMsg = restResponse.text()
+                        String errMsg = restResponse.text()
                         ec.logger.error("Ups error response (${restResponse.statusCode}): ${errMsg}")
-                        ec.message.addMessage("Ups API error")
-                        ec.message.addMessage(errMsg)
-                        return
+                        ec.message.addMessage("Ups API error" +errMsg)
+                        return responseMap
                     }
-                responseMap = restResponse.jsonObject()
             ]]></script>
         </actions>
     </service>
@@ -87,8 +89,7 @@
 
             <!-- Preparing address map by calling get#AddressMap service-->
             <service-call name="mantle.ups.UpsServices.get#AddressMap" out-map="addrOut" in-map="[postalAddress:postalAddress, partyId:partyId]"/>
-            <!--TODO: Will handle request failure response in the specific task-->
-            <!--Ticket Link: https://app.clickup.com/t/1wfazy0 -->
+
             <set field="address" from="addrOut.addressMap"/>
             <set field="addressMap" from="addrOut.addressMap.Address"/>
             <set field="addressValidationRequestMap" from="[Request:[TransactionReference:[CustomerContext:'Ups Shipping Address Validation'], RequestAction:'AV'], Address:addressMap]"/>
@@ -96,8 +97,14 @@
 
             <!-- Calling generic service for sending request  -->
             <service-call name="mantle.ups.UpsServices.send#UpsRequest" in-map="[shippingGatewayConfigId:shippingGatewayConfigId, path:path, methodType:method, requestMap:inMap]" out-map="addrValidationResponseOut"/>
+
             <set field="responseStatusCode" from="addrValidationResponseOut.responseMap.AddressValidationResponse.Response?.ResponseStatusCode"/>
             <set field="responseStatusDescription" from="addrValidationResponseOut.responseMap.AddressValidationResponse.Response?.ResponseStatusDescription"/>
+
+            <!-- Return error code with description if the address is not valid -->
+            <if condition="'0'.equals(responseStatusCode)">
+                <return message="Error ${addrValidationResponseOut.responseMap.AddressValidationResponse?.Response?.Error?.ErrorCode}: ${addrValidationResponseOut.responseMap.AddressValidationResponse?.Response?.Error?.ErrorDescription}"/>
+            </if>
 
             <!-- Check if the response is valid or not -->
             <set field="is_valid" from="'1'.equals(responseStatusCode)"/>
