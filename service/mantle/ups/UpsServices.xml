@@ -31,9 +31,9 @@
                  RestClient restClient = ec.service.rest()
                  restClient.method(methodType)
                  restClient.uri(connectUrl)
-                 .addHeader("AccessLicenseNumber", " ")
-                            .addHeader("Password", " ")
-                            .addHeader("Username", " ")
+                 .addHeader("AccessLicenseNumber", upsShippingConfig.accessLicenceNumber)
+                            .addHeader("Password", upsShippingConfig.password)
+                            .addHeader("Username", upsShippingConfig.userId)
                  .basicAuth(upsShippingConfig.userId, upsShippingConfig.password)
                  restClient.contentType("application/json")
                  restClient.jsonObject(requestMap)
@@ -42,7 +42,7 @@
                  if (restResponse.statusCode < 200 || restResponse.statusCode > 300) {
                         String errMsg = restResponse.text()
                         ec.logger.error("Ups error response (${restResponse.statusCode}): ${errMsg}")
-                        ec.message.addMessage("Ups API error" +errMsg)
+                        ec.message.addMessage("Ups API error " +errMsg)
                         return responseMap
                     }
             ]]></script>
