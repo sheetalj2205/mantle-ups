@@ -34,7 +34,6 @@
                  .addHeader("AccessLicenseNumber", upsShippingConfig.accessLicenceNumber)
                             .addHeader("Password", upsShippingConfig.password)
                             .addHeader("Username", upsShippingConfig.userId)
-                 .basicAuth(upsShippingConfig.userId, upsShippingConfig.password)
                  restClient.contentType("application/json")
                  restClient.jsonObject(requestMap)
                  RestClient.RestResponse restResponse = restClient.call()
@@ -107,9 +106,9 @@
             </if>
 
             <!-- Check if the response is valid or not -->
-            <set field="is_valid" from="'1'.equals(responseStatusCode)"/>
+            <set field="isValid" from="'1'.equals(responseStatusCode)"/>
             <!--if responseStatusCode is 1 then only code is giving Success rest in all cases it is Failure: based on that set value of trustLevelEnumId -->
-            <set field="trustLevelEnumId" from="(is_valid) ? 'CmtlValid' : 'CmtlInvalid'"/>
+            <set field="trustLevelEnumId" from="(isValid) ? 'CmtlValid' : 'CmtlInvalid'"/>
             <log message="Ups validate address ${contactMechId} complete? ${responseStatusDescription} valid? ${responseStatusCode} trust ${trustLevelEnumId}}"/>
 
             <!--Note: currently service is validating the address only on the basis of the response status code that it is either Success or Faliure -->
