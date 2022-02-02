@@ -92,7 +92,7 @@
                 <return type="danger" message="Response not received on calling get#ShippingLabel service"></return>
             </if>
 
-            <!-- Store label image urls and tracking numbers in a list in the same sequence of packages as in request-->
+            <!-- Store label image urls and tracking numbers as a key-value pair in a list in the same sequence of packages as in request-->
             <set field="imageUrls" from="[:]"/>
 
             <if condition="packageResultsList instanceof List">
