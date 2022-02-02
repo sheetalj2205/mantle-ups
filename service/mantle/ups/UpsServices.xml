@@ -93,34 +93,34 @@
             </if>
 
             <!-- Store label image urls and tracking numbers in a list in the same sequence of packages as in request-->
-            <set field="imageUrls" from="[]"/>
-            <set field="trackingNumbers" from="[]"/>
+            <set field="imageUrls" from="[:]"/>
 
             <if condition="packageResultsList instanceof List">
                 <iterate list="packageResultsList" entry="packageResultInfo">
                     <set field="graphicImageUrl" from="packageResultInfo.ShippingLabel.GraphicImage"/>
                     <set field="trackingNumber" from="packageResultInfo.TrackingNumber"/>
-                    <script>imageUrls.add(graphicImageUrl)
-                        trackingNumbers.add(trackingNumber)</script>
+                    <script>imageUrls.put(graphicImageUrl, trackingNumber)</script>
                 </iterate>
                 <else>
                     <!--If packageResult is a Map for single package -->
                     <set field="graphicImageUrl" from="packageResultsList.ShippingLabel.GraphicImage"/>
                     <set field="trackingNumber" from="packageResultsList.TrackingNumber"/>
-                    <script>imageUrls.add(graphicImageUrl)
-                        trackingNumbers.add(trackingNumber)</script>
+                    <script>imageUrls.put(graphicImageUrl, trackingNumber)</script>
                 </else>
             </if>
 
             <!-- Store each Package's trackingCode and labelImage in its record of packageRouteSeg -->
             <iterate list="packageRouteSegList" entry="packageRouteSeg">
                 <script>
-                    String url = imageUrls[packageRouteSeg_index]
-                    byte[] binData = Base64.getDecoder().decode(url)
+                    for(Map.Entry imageMapEntry in imageUrls){
+                      String url = imageMapEntry.getKey()
+                      String trackingNumber = imageMapEntry.getValue()
+                      byte[] binData = Base64.getDecoder().decode(url)
                 </script>
-                <set field="packageRouteSeg.trackingCode" from="trackingNumbers[packageRouteSeg_index]"/>
+                <set field="packageRouteSeg.trackingCode" from="trackingNumber"/>
                 <set field="packageRouteSeg.labelImage" from="binData"/>
                 <entity-update value-field="packageRouteSeg"/>
+                <script>}</script>
             </iterate>
         </actions>
 
